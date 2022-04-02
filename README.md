@@ -12,3 +12,5 @@ Usage: giturls -n [name] [options]
     -u, --user                       Clone all repos belonging to a user
     -h, --help                       Print this help text
 ```
+
+You must have the environment variable `GITHUB_TOKEN` set to a valid Github API token
