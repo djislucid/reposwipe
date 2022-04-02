@@ -1,0 +1,19 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    colorize (0.8.1)
+    git (1.10.2)
+      rchardet (~> 1.8)
+    optparse (0.2.0)
+    rchardet (1.8.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  colorize (~> 0.8.1)
+  git (~> 1.10)
+  optparse
+
+BUNDLED WITH
+   1.17.2
