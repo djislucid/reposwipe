@@ -1,7 +1,8 @@
 #!/usr/bin/env ruby
 # Created by djislucid
 # Add multithreading
-# Add actually parsing files and using regex to get relative endpoints
+# For now this works by: reposwipe -n att -r --org| extract_urls
+# I'll add it in later
 
 require 'net/http'
 require 'optparse'
@@ -13,7 +14,7 @@ require 'find'
 options = {}
 
 OptionParser.new do |opts|
-  opts.banner = "Usage: swiperepo -n [name] [options]"
+  opts.banner = "Usage: reposwipe -n [name] [options]"
 
   opts.on("-n", "--name [NAME]", "Specify the name of the user or organizing who's repos you want to clone") do |name|
     options[:name] = name
@@ -21,6 +22,9 @@ OptionParser.new do |opts|
 
   opts.on("-o", "--org", "Clone all repos belonging to an organization") { options[:type] = "orgs" }
   opts.on("-u", "--user", "Clone all repos belonging to a user") { options[:type] = "users" }
+  opts.on("-r", "--relative-urls", "Cat the file contents and search for relative URLS") do |regex|
+    options[:regex] = true
+  end
   opts.on("-h", "--help", "Print this help text") do 
     puts opts
     exit 0
@@ -41,6 +45,10 @@ def list_recursively(dir)
     # don't need to read files in the .git directory of the repo
     if first_dir != ".git"
       content = File.read(path) unless FileTest.directory?(path)
+
+      # this is where we would eventually use Jobert's regex
+      # since it involves relative URLs you can't exactly check for att.com in the URL for example
+      # But we could always add that as an optional flag
       puts content
     end
   end
@@ -74,7 +82,7 @@ begin
       puts "Cloned #{location.green} into #{path.green}"
 
       # list the files in the directory we just clone
-      list_recursively(path)
+      list_recursively(path) if options[:regex]
     rescue Git::GitExecuteError
       # if something went wrong move on. Likely the directory already exists
       puts "Failed to clone #{location}".red
