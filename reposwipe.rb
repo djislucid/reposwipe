@@ -1,11 +1,14 @@
 #!/usr/bin/env ruby
 # Created by djislucid
+# Add multithreading
+# Add actually parsing files and using regex to get relative endpoints
 
 require 'net/http'
 require 'optparse'
 require 'colorize'
 require 'json'
 require 'git'
+require 'find'
 
 options = {}
 
@@ -30,6 +33,19 @@ unless options[:name]
   exit 1
 end
 
+# List all files in the repos
+def list_recursively(dir)
+  Find.find(dir) do |path|
+    first_dir = path.split(/#{dir}/, -1)[1].split('/', -1)[1]
+
+    # don't need to read files in the .git directory of the repo
+    if first_dir != ".git"
+      content = File.read(path) unless FileTest.directory?(path)
+      puts content
+    end
+  end
+end
+
 begin
   uri = URI("https://api.github.com/#{options[:type]}/#{options[:name]}/repos\?per_page\=100\&page\=1")
   req = Net::HTTP::Get.new(uri)
@@ -40,11 +56,9 @@ begin
     http.request(req)
   end
 
-  # loop. Then clone all the repos in as multi-threaded a fashion as you can in ruby into options[:dir]
-  # Then use Jobert's regex on all the files.
+  # Parse the JSON response for the clone URLs
   JSON.parse(res.body).each do |object|
     begin
-      # clone each of these into a directory
       repo = object['clone_url'].gsub(/"/, '')
       location = repo.split('/', -1)[4]
     rescue TypeError
@@ -55,14 +69,19 @@ begin
     # Clone all the repos the a directory with the name you specified
     begin
       Git.clone(repo, location, :path => options[:name])
-      puts "Cloned #{location} into #{Dir.pwd}/#{options[:name]}/#{location}".green
+
+      path = "#{Dir.pwd}/#{options[:name]}/#{location}"
+      puts "Cloned #{location.green} into #{path.green}"
+
+      # list the files in the directory we just clone
+      list_recursively(path)
     rescue Git::GitExecuteError
       # if something went wrong move on. Likely the directory already exists
       puts "Failed to clone #{location}".red
       next
     end
   end
-
+  
 rescue Interrupt
   puts "Terminated by user".red
   exit
